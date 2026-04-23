@@ -1,4 +1,4 @@
-project_name: Philly CHP Intelligence
+project_name: Philly CHP Intelligence (Sanity)
 paths:
   raw_data_dir: data/raw
   processed_data_dir: data/processed
@@ -8,22 +8,22 @@ datasets:
     url: https://hub.arcgis.com/api/v3/datasets/236455b7f9e94603a1e2466d4e5b82e3_0/downloads/data?format=csv&spatialRefId=3857&where=1%3D1
     format: csv
   opa_properties:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+opa_properties_public&filename=opa_properties_public&format=csv&skipfields=cartodb_id
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+opa_properties_public+LIMIT+5000&filename=opa_properties_public&format=csv&skipfields=cartodb_id
     format: csv
   land_use:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+land_use&filename=land_use&format=csv&skipfields=cartodb_id
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+land_use+LIMIT+5000&filename=land_use&format=csv&skipfields=cartodb_id
     format: csv
   li_permits:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_permits&filename=li_permits&format=csv&skipfields=cartodb_id
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_permits+LIMIT+5000&filename=li_permits&format=csv&skipfields=cartodb_id
     format: csv
   li_unsafe_violations:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_violations&filename=li_violations&format=csv&skipfields=cartodb_id
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_violations+LIMIT+5000&filename=li_violations&format=csv&skipfields=cartodb_id
     format: csv
   complaints:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*,+ST_Y(the_geom)+AS+lat,+ST_X(the_geom)+AS+lng+FROM+complaints&filename=complaints&format=csv&skipfields=cartodb_id
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*,+ST_Y(the_geom)+AS+lat,+ST_X(the_geom)+AS+lng+FROM+complaints+LIMIT+5000&filename=complaints&format=csv&skipfields=cartodb_id
     format: csv
   parcels:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+pwd_parcels&filename=pwd_parcels&format=csv&skipfields=cartodb_id
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+pwd_parcels+LIMIT+5000&filename=pwd_parcels&format=csv&skipfields=cartodb_id
     format: csv
 
 scoring:

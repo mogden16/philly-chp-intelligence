@@ -8,22 +8,22 @@ datasets:
     url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+building_energy_benchmarking
     format: csv
   opa_properties:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+opa_properties_public
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+opa_properties_public&filename=opa_properties_public&format=csv&skipfields=cartodb_id
     format: csv
   land_use:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+land_use
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+land_use&filename=land_use&format=csv&skipfields=cartodb_id
     format: csv
   li_permits:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_permits
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_permits&filename=li_permits&format=csv&skipfields=cartodb_id
     format: csv
   li_unsafe_violations:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_violations
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_violations&filename=li_violations&format=csv&skipfields=cartodb_id
     format: csv
   complaints:
     url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+311_complaints
     format: csv
   parcels:
-    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+pwd_parcels
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+pwd_parcels&filename=pwd_parcels&format=csv&skipfields=cartodb_id
     format: csv
 
 scoring:
