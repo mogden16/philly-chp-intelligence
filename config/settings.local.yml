@@ -1,0 +1,51 @@
+project_name: Philly CHP Intelligence
+paths:
+  raw_data_dir: data/raw
+  processed_data_dir: data/processed
+
+datasets:
+  benchmarking:
+    url: https://hub.arcgis.com/api/v3/datasets/236455b7f9e94603a1e2466d4e5b82e3_0/downloads/data?format=csv&spatialRefId=3857&where=1%3D1
+    format: csv
+  opa_properties:
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+opa_properties_public
+    format: csv
+  land_use:
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+land_use
+    format: csv
+  li_permits:
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_permits
+    format: csv
+  li_unsafe_violations:
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+li_violations
+    format: csv
+  complaints:
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*,+ST_Y(the_geom)+AS+lat,+ST_X(the_geom)+AS+lng+FROM+complaints&filename=complaints&format=csv&skipfields=cartodb_id
+    format: csv
+  parcels:
+    url: https://phl.carto.com/api/v2/sql?q=SELECT+*+FROM+pwd_parcels
+    format: csv
+
+scoring:
+  weights:
+    chp_fit_score: 0.35
+    deferred_maintenance_score: 0.25
+    project_size_score: 0.20
+    pursuit_score: 0.20
+  thresholds:
+    high_site_eui: 80
+    large_building_sqft: 50000
+    very_large_building_sqft: 150000
+    recent_years_window: 5
+  building_type_keywords:
+    industrial:
+      - INDUSTRIAL
+      - MANUFACTURING
+      - WAREHOUSE
+      - LOGISTICS
+    commercial:
+      - OFFICE
+      - HOSPITAL
+      - HOTEL
+      - UNIVERSITY
+      - RETAIL
