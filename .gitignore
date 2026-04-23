@@ -1,0 +1,11 @@
+.idea/
+.venv/
+venv/
+python/
+__pycache__/
+*.pyc
+
+data/raw/*.csv
+data/processed/*.parquet
+!data/raw/.gitkeep
+!data/processed/.gitkeep
