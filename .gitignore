@@ -7,5 +7,7 @@ __pycache__/
 
 data/raw/*.csv
 data/processed/*.parquet
+data/processed/*.csv
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+data/raw/*.json

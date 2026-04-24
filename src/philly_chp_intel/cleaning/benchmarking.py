@@ -10,14 +10,37 @@ def clean_benchmarking(df: pd.DataFrame) -> pd.DataFrame:
     raw = normalize_columns(df.copy())
 
     building_name = pick_first_column(raw, ["building_name", "property_name", "facility_name"])
-    address = pick_first_column(raw, ["address", "property_address", "street_address"]).map(normalize_address)
-    parcel_id = pick_first_column(raw, ["parcel_id", "opa_account_num", "mapreg"])
-    account_id = pick_first_column(raw, ["account_num", "opa_account_num", "account_id"])
-    building_type = pick_first_column(raw, ["primary_property_type", "building_type", "property_type"])
-    sqft = to_numeric(pick_first_column(raw, ["gross_floor_area", "gross_floor_area_sq_ft", "square_feet", "bldg_sqft"]))
-    site_eui = to_numeric(pick_first_column(raw, ["site_eui_kbtu_ft2", "site_eui", "weather_normalized_site_eui"]))
-    source_eui = to_numeric(pick_first_column(raw, ["source_eui_kbtu_ft2", "source_eui", "weather_normalized_source_eui"]))
-    ghg = to_numeric(pick_first_column(raw, ["ghg_emissions_intensity", "ghg_intensity", "total_ghg_emissions_intensity"]))
+    address = pick_first_column(raw, ["address", "property_address", "street_address", "location"]).map(normalize_address)
+    parcel_id = pick_first_column(raw, ["parcel_id", "parcel_id_num", "mapreg", "parcel_number"])
+    account_id = pick_first_column(raw, ["opa_account_num", "account_num", "account_id", "philadelphia_building_id", "id"])
+    building_type = pick_first_column(
+        raw,
+        ["primary_property_type", "building_type", "property_type", "primary_prop_type_epa_calc", "compliance_type"],
+    )
+    sqft = to_numeric(
+        pick_first_column(
+            raw,
+            ["gross_floor_area", "gross_floor_area_sq_ft", "square_feet", "bldg_sqft", "total_floor_area_bld_pk_ft2"],
+        )
+    )
+    site_eui = to_numeric(
+        pick_first_column(
+            raw,
+            ["site_eui_kbtu_ft2", "site_eui", "weather_normalized_site_eui", "site_eui_kbtuft2", "weather_norm_site_eui_kbtuft2"],
+        )
+    )
+    source_eui = to_numeric(
+        pick_first_column(
+            raw,
+            ["source_eui_kbtu_ft2", "source_eui", "weather_normalized_source_eui", "source_eui_kbtuft2", "weather_norm_source_eui_kbtuf"],
+        )
+    )
+    ghg = to_numeric(
+        pick_first_column(
+            raw,
+            ["ghg_emissions_intensity", "ghg_intensity", "total_ghg_emissions_intensity", "total_ghg_emissions_mtco2e"],
+        )
+    )
 
     cleaned = pd.DataFrame(
         {

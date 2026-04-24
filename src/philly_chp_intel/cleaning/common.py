@@ -43,14 +43,14 @@ def parse_datetime(series: pd.Series) -> pd.Series:
 
 def build_property_key(parcel_id: object, account_id: object, address: object) -> str:
     """Build deterministic property key from parcel/account/address."""
-    if parcel_id is not None and str(parcel_id).strip() and str(parcel_id).strip().lower() != "nan":
-        return f"PARCEL::{str(parcel_id).strip().upper()}"
-    if account_id is not None and str(account_id).strip() and str(account_id).strip().lower() != "nan":
-        return f"ACCOUNT::{str(account_id).strip().upper()}"
     normalized = normalize_address(address)
     if normalized:
         digest = md5(normalized.encode("utf-8")).hexdigest()[:12]
         return f"ADDR::{digest}"
+    if account_id is not None and str(account_id).strip() and str(account_id).strip().lower() != "nan":
+        return f"ACCOUNT::{str(account_id).strip().upper()}"
+    if parcel_id is not None and str(parcel_id).strip() and str(parcel_id).strip().lower() != "nan":
+        return f"PARCEL::{str(parcel_id).strip().upper()}"
     return "UNKNOWN"
 
 
@@ -60,3 +60,12 @@ def bounded_score(series: pd.Series, min_value: float, max_value: float) -> pd.S
         return pd.Series([0.0] * len(series), index=series.index)
     scaled = (series - min_value) / (max_value - min_value)
     return (scaled.clip(lower=0.0, upper=1.0) * 100.0).fillna(0.0)
+
+
+def rolling_recent_cutoff(date_series: pd.Series, years_window: int = 5) -> pd.Timestamp:
+    """Compute a recent cutoff anchored to now, or to dataset max date when data is stale."""
+    now_cutoff = pd.Timestamp.utcnow() - pd.DateOffset(years=years_window)
+    max_date = date_series.max()
+    if pd.notna(max_date) and max_date < now_cutoff:
+        return max_date - pd.DateOffset(years=years_window)
+    return now_cutoff

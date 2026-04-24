@@ -1,10 +1,16 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import pandas as pd
 
-from .common import build_property_key, normalize_address, normalize_columns, parse_datetime, pick_first_column, to_numeric
+from .common import (
+    build_property_key,
+    normalize_address,
+    normalize_columns,
+    parse_datetime,
+    pick_first_column,
+    rolling_recent_cutoff,
+    to_numeric,
+)
 
 
 def clean_permits(df: pd.DataFrame, years_window: int = 5) -> pd.DataFrame:
@@ -12,11 +18,14 @@ def clean_permits(df: pd.DataFrame, years_window: int = 5) -> pd.DataFrame:
     raw = normalize_columns(df.copy())
 
     address = pick_first_column(raw, ["address", "street_address", "location"]).map(normalize_address)
-    parcel_id = pick_first_column(raw, ["parcel_id", "mapreg", "opa_account_num"])
+    parcel_id = pick_first_column(raw, ["parcel_id", "mapreg", "parcel_id_num", "parcel_number"])
     account_id = pick_first_column(raw, ["account_num", "opa_account_num"])
-    issued_date = parse_datetime(pick_first_column(raw, ["issued_date", "permit_issued_date", "date_issued"]))
+    issued_date = parse_datetime(pick_first_column(raw, ["issued_date", "permit_issued_date", "date_issued", "permitissuedate"]))
     permit_value = to_numeric(pick_first_column(raw, ["estimated_cost", "permit_value", "value"]))
-    permit_type = pick_first_column(raw, ["permit_type", "permit_description", "work_type"]).fillna("UNKNOWN")
+    permit_type = pick_first_column(
+        raw,
+        ["permit_type", "permit_description", "work_type", "permittype", "permitdescription", "permit_type_name", "typeofwork"],
+    ).fillna("UNKNOWN")
 
     out = pd.DataFrame(
         {
@@ -32,7 +41,7 @@ def clean_permits(df: pd.DataFrame, years_window: int = 5) -> pd.DataFrame:
         lambda r: build_property_key(r["parcel_id"], r["account_id"], r["address"]), axis=1
     )
 
-    cutoff = pd.Timestamp(datetime.now(timezone.utc)).tz_convert("UTC") - pd.DateOffset(years=years_window)
+    cutoff = rolling_recent_cutoff(out["issued_date"], years_window=years_window)
     recent = out[out["issued_date"] >= cutoff].copy()
 
     summary = (
