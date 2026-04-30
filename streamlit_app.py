@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import pandas as pd
@@ -94,6 +95,14 @@ def _render_kpi(label: str, value: str, help_text: str) -> None:
         f"<div class='kpi-card'><div class='kpi-label' title='{help_text}'>{label}</div><div class='kpi-value'>{value}</div></div>",
         unsafe_allow_html=True,
     )
+
+
+def _yes_no(value: bool) -> str:
+    return "Yes" if bool(value) else "No"
+
+
+def _matplotlib_available() -> bool:
+    return importlib.util.find_spec("matplotlib") is not None
 
 
 processed_path = Path("data/processed/master_buildings_scored.parquet")
@@ -254,25 +263,28 @@ display = display.rename(
     }
 )
 
-styler = (
-    display.style.format(
-        {
-            "Opportunity Score": "{:.1f}",
-            "CHP Fit": "{:.1f}",
-            "Deferred Need": "{:.1f}",
-            "Project Scale": "{:.1f}",
-            "Pursuit Ease": "{:.1f}",
-            "Square Footage": "{:,.0f}",
-            "Site EUI": "{:.1f}",
-            "Recent Permits (5y)": "{:.0f}",
-            "Unsafe Violations (5y)": "{:.0f}",
-        }
+if _matplotlib_available():
+    styler = (
+        display.style.format(
+            {
+                "Opportunity Score": "{:.1f}",
+                "CHP Fit": "{:.1f}",
+                "Deferred Need": "{:.1f}",
+                "Project Scale": "{:.1f}",
+                "Pursuit Ease": "{:.1f}",
+                "Square Footage": "{:,.0f}",
+                "Site EUI": "{:.1f}",
+                "Recent Permits (5y)": "{:.0f}",
+                "Unsafe Violations (5y)": "{:.0f}",
+            }
+        )
+        .background_gradient(subset=["Opportunity Score"], cmap="YlGn")
+        .background_gradient(subset=["CHP Fit"], cmap="Blues")
+        .background_gradient(subset=["Deferred Need"], cmap="Oranges")
     )
-    .background_gradient(subset=["Opportunity Score"], cmap="YlGn")
-    .background_gradient(subset=["CHP Fit"], cmap="Blues")
-    .background_gradient(subset=["Deferred Need"], cmap="Oranges")
-)
-st.dataframe(styler, use_container_width=True, height=400)
+    st.dataframe(styler, use_container_width=True, height=400)
+else:
+    st.dataframe(display, use_container_width=True, height=400)
 
 filtered.to_csv("data/processed/latest_filtered_targets.csv", index=False)
 st.download_button(
@@ -307,26 +319,69 @@ st.download_button(
     mime="text/csv",
 )
 
-map_df = filtered.dropna(subset=["latitude", "longitude"]).copy()
-if len(map_df):
-    st.markdown("<div class='section-title'>Philly Opportunity Map</div>", unsafe_allow_html=True)
-    map_df["final_opportunity_score"] = map_df["final_opportunity_score"].fillna(0)
-    map_df["color_r"] = (240 - (map_df["final_opportunity_score"] * 1.9).clip(0, 185)).astype(int)
-    map_df["color_g"] = (88 + (map_df["final_opportunity_score"] * 1.3).clip(0, 155)).astype(int)
-    map_df["color_b"] = 95
-    map_df["radius"] = (50 + map_df["final_opportunity_score"] * 1.6).clip(50, 210)
+st.markdown("<div class='section-title'>Philly Opportunity Map</div>", unsafe_allow_html=True)
+map_df = filtered.copy()
+if "latitude" in map_df.columns and "longitude" in map_df.columns:
+    map_df["latitude"] = pd.to_numeric(map_df["latitude"], errors="coerce")
+    map_df["longitude"] = pd.to_numeric(map_df["longitude"], errors="coerce")
+    map_df = map_df.dropna(subset=["latitude", "longitude"]).copy()
 
-    layer = pdk.Layer(
+if len(map_df):
+    max_points = st.slider("Map point limit", min_value=100, max_value=5000, value=1500, step=100, help="Limit points for map responsiveness.")
+    map_df = map_df.sort_values("final_opportunity_score", ascending=False).head(max_points).copy()
+    map_df["final_opportunity_score"] = map_df["final_opportunity_score"].fillna(0)
+    map_df["color_r"] = (245 - (map_df["final_opportunity_score"] * 1.7).clip(0, 180)).astype(int)
+    map_df["color_g"] = (86 + (map_df["final_opportunity_score"] * 1.4).clip(0, 160)).astype(int)
+    map_df["color_b"] = 98
+    map_df["radius"] = (80 + map_df["final_opportunity_score"] * 2.8).clip(80, 420)
+    map_df["elevation"] = (300 + map_df["final_opportunity_score"] * 45).clip(300, 5000)
+
+    scatter_layer = pdk.Layer(
         "ScatterplotLayer",
         data=map_df,
         get_position="[longitude, latitude]",
         get_radius="radius",
-        get_fill_color="[color_r, color_g, color_b, 190]",
+        radius_min_pixels=3,
+        radius_max_pixels=24,
+        get_fill_color="[color_r, color_g, color_b, 200]",
+        stroked=True,
+        get_line_color=[220, 235, 255, 140],
+        line_width_min_pixels=1,
         pickable=True,
     )
-    view_state = pdk.ViewState(latitude=39.9526, longitude=-75.1652, zoom=10.9, pitch=20)
-    tooltip = {"html": "<b>{building_name}</b><br/>{address}<br/>Opportunity: {final_opportunity_score}", "style": {"backgroundColor": "#0b1322", "color": "#e4efff"}}
-    st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip=tooltip))
+    column_layer = pdk.Layer(
+        "ColumnLayer",
+        data=map_df,
+        get_position="[longitude, latitude]",
+        radius=55,
+        get_elevation="elevation",
+        elevation_scale=1,
+        get_fill_color="[color_r, color_g, color_b, 115]",
+        pickable=True,
+    )
+    heat_layer = pdk.Layer(
+        "HeatmapLayer",
+        data=map_df,
+        get_position="[longitude, latitude]",
+        get_weight="final_opportunity_score",
+        opacity=0.25,
+    )
+
+    view_state = pdk.ViewState(latitude=39.9526, longitude=-75.1652, zoom=10.9, pitch=35, bearing=10)
+    tooltip = {
+        "html": "<b>{building_name}</b><br/>{address}<br/>Opportunity: {final_opportunity_score}<br/>CHP Fit: {chp_fit_score}<br/>Deferred Need: {historical_deferred_maintenance_score}",
+        "style": {"backgroundColor": "#0b1322", "color": "#e4efff"},
+    }
+    st.pydeck_chart(
+        pdk.Deck(
+            map_style="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+            layers=[heat_layer, column_layer, scatter_layer],
+            initial_view_state=view_state,
+            tooltip=tooltip,
+        )
+    )
+else:
+    st.warning("No mapped coordinates are available yet. Re-run the pipeline after the coordinate patch to populate map points.")
 
 st.markdown("<div class='section-title'>Building Detail</div>", unsafe_allow_html=True)
 if len(filtered):

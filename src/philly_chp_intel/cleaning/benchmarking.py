@@ -41,6 +41,8 @@ def clean_benchmarking(df: pd.DataFrame) -> pd.DataFrame:
             ["ghg_emissions_intensity", "ghg_intensity", "total_ghg_emissions_intensity", "total_ghg_emissions_mtco2e"],
         )
     )
+    latitude = to_numeric(pick_first_column(raw, ["latitude", "lat", "y_lat", "point_y"]))
+    longitude = to_numeric(pick_first_column(raw, ["longitude", "lng", "lon", "x_lon", "point_x"]))
 
     cleaned = pd.DataFrame(
         {
@@ -53,6 +55,8 @@ def clean_benchmarking(df: pd.DataFrame) -> pd.DataFrame:
             "benchmark_site_eui": site_eui,
             "benchmark_source_eui": source_eui,
             "benchmark_ghg_intensity": ghg,
+            "latitude": latitude,
+            "longitude": longitude,
             "benchmark_record_count": 1,
         }
     )
@@ -73,6 +77,8 @@ def clean_benchmarking(df: pd.DataFrame) -> pd.DataFrame:
                 "benchmark_site_eui": "mean",
                 "benchmark_source_eui": "mean",
                 "benchmark_ghg_intensity": "mean",
+                "latitude": "mean",
+                "longitude": "mean",
                 "benchmark_record_count": "sum",
             }
         )

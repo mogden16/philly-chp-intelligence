@@ -7,3 +7,4 @@ requests
 PyYAML
 streamlit
 pydeck
+matplotlib
